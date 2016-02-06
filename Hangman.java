@@ -14,11 +14,13 @@ public class Hangman extends GraphicsProgram
   
   //Logic Controlling Vars
   public boolean gameState = false;  
+  public boolean gameRunBefore = false;
   public String selectedWord = "";
   public char[] incorrectGuesses;
   public char[] correctGuesses;
   public char[] wordArray;
   int wrongGuesses = 0;
+  int rightGuesses = 0;
   
   //GUI
   JTextField guess;
@@ -179,6 +181,7 @@ public class Hangman extends GraphicsProgram
       
       //Reset all vars
       wrongGuesses = 0;
+      rightGuesses = 0;
       incorrectGuesses = new char[26];
       correctGuesses = new char[26];
       
@@ -193,6 +196,16 @@ public class Hangman extends GraphicsProgram
       remove(rArm);
       remove(lLeg);
       remove(rLeg);
+      
+      //Removing the answer spots if the game has been run before to make room for new ones
+      if (gameRunBefore == true)
+      {
+        for (int i = 0; i < answerLetters.length; i++)
+        {
+          remove(answerLetters[i]);
+          remove(answerLine);
+        }
+      }
       
       //Create new GUI
       //add(stop, NORTH);
@@ -209,7 +222,8 @@ public class Hangman extends GraphicsProgram
       
       //A label for offset purposes, don't add to gui
       GLabel widthLabel = new GLabel("_ ");
-      //Dtetermining the number of answer spots needed
+      
+      //Determining the number of answer spots needed
       answerLetters = new GLabel[selectedWord.length()];
       
       //Some positioning
@@ -218,6 +232,7 @@ public class Hangman extends GraphicsProgram
       
       wordArray = new char[selectedWord.length()];
       correctGuesses = new char[selectedWord.length()];
+      
       //Populate the answer spots with spaces and offseting them
       for (int i = 0; i < selectedWord.length(); i++)
       {
@@ -226,15 +241,25 @@ public class Hangman extends GraphicsProgram
         add(answerLetters[i]);
         wordArray[i] = selectedWord.charAt(i);
       }
+          
+      //Clear out incorrect answer spots
+      for (int i = 0; i < WRONG_LETTERS_COLUMNS; i++)
+      {
+        for (int n = 0; n < WRONG_LETTERS_ROWS; n++)
+        {
+          wrongLetters[i][n].setLabel(" ");
+        }
+      }
       
       add(answerLine, answerLineX, answerLineY);
       System.out.println(selectedWord);
       gameState = true;
+      gameRunBefore = true;
       updateStatus("Game Started");
     }
     else if (e.getSource() == start && gameState == true)
     {    
-      stopGame(true);
+      stopGame(true, false);
     }
     if (e.getSource() == submit && gameState == true && guess.getText().length() == 1)
     {
@@ -260,7 +285,7 @@ public class Hangman extends GraphicsProgram
             isNotAlreadyCorrect = false;
           }
         }
-        if (isCorrectGuess == true && isNotAlreadyCorrect == true) //it is correct and hasn't been guesses
+        if (isCorrectGuess == true && isNotAlreadyCorrect == true) //it is correct and hasn't been guessed
         {
           System.out.println("correct");
           for (int i = 0; i < correctGuesses.length; i++)
@@ -290,6 +315,11 @@ public class Hangman extends GraphicsProgram
               System.out.println("set");
             }
           }
+          rightGuesses++;
+          if (rightGuesses == wordArray.length)
+          {
+            stopGame(false, true);
+          }
         }
         else if (isCorrectGuess == false)
         {
@@ -316,7 +346,7 @@ public class Hangman extends GraphicsProgram
                 break;
               }
             }
-            //Increase the "score"
+            //Increase the count of wrong guesses
             wrongGuesses++;
             //Draw the hangman & check if the game is over
             switch (wrongGuesses)
@@ -360,7 +390,7 @@ public class Hangman extends GraphicsProgram
               case 10:
                 add(rLeg);
                 wrongLetters[4][1].setLabel("" + theGuess);
-                stopGame(false);
+                stopGame(false, false);
                 break;
             }
           }
@@ -369,7 +399,7 @@ public class Hangman extends GraphicsProgram
     }
   }  
   
-  public void stopGame(boolean playerStopped)
+  public void stopGame(boolean playerStopped, boolean playerWon)
   {
     start.setText("Start Game");
     gameState = false;
@@ -392,18 +422,19 @@ public class Hangman extends GraphicsProgram
     {
       updateStatus("Game Over!");
     }
+    // for (int i = 0; i < answerLetters.length; i++)
+    // {
+    //   remove(answerLetters[i]);
+    // }
     for (int i = 0; i < answerLetters.length; i++)
     {
-      remove(answerLetters[i]);
+      answerLetters[i].setLabel("" + wordArray[i]);
     }
-    for (int i = 0; i < WRONG_LETTERS_COLUMNS; i++)
+    //remove(answerLine);
+    if (playerWon == true)
     {
-      for (int n = 0; n < WRONG_LETTERS_ROWS; n++)
-      {
-        wrongLetters[i][n].setLabel(" ");
-      }
+      updateStatus("You Won!");
     }
-    remove(answerLine);
   }
   
   public void updateStatus(String newLabel)
