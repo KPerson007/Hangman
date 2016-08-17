@@ -16,6 +16,7 @@ public class Hangman extends GraphicsProgram
   public boolean gameState = false;  
   public boolean gameRunBefore = false;
   public String selectedWord = "";
+  public String fixedSelectedWord = "";
   public char[] incorrectGuesses;
   public char[] correctGuesses;
   public char[] wordArray;
@@ -178,6 +179,9 @@ public class Hangman extends GraphicsProgram
       RandomGenerator myRandom = new RandomGenerator();
       int index = myRandom.nextInt(0, dictionary.length - 1);
       selectedWord = dictionary[index];
+      fixedSelectedWord = selectedWord.toLowerCase();
+      System.out.println(fixedSelectedWord);
+      
       
       //Reset all vars
       wrongGuesses = 0;
@@ -213,12 +217,26 @@ public class Hangman extends GraphicsProgram
       //addActionListeners();
       start.setText("Stop Game");
       
-      //Populate the answer line with _s
+      //Populate the answer line with _s if the char in that spot isn't a space
       for (int i = 0; i < selectedWord.length() - 1; i++)
       {
-        answerLine.setLabel(answerLine.getLabel() + "_ ");
+        if (!(selectedWord.charAt(i) == ' '))
+        {
+          answerLine.setLabel(answerLine.getLabel() + "_ ");
+        }
+        else
+        {
+          answerLine.setLabel(answerLine.getLabel() + "   ");
+        }
       }
-      answerLine.setLabel(answerLine.getLabel() + "_");
+      if (!(selectedWord.charAt(selectedWord.length() - 1) == ' '))
+      {
+        answerLine.setLabel(answerLine.getLabel() + "_");
+      }
+      else
+      {
+        answerLine.setLabel(answerLine.getLabel() + "  ");
+      }
       
       //A label for offset purposes, don't add to gui
       GLabel widthLabel = new GLabel("_ ");
@@ -241,7 +259,7 @@ public class Hangman extends GraphicsProgram
         add(answerLetters[i]);
         wordArray[i] = selectedWord.charAt(i);
       }
-          
+      
       //Clear out incorrect answer spots
       for (int i = 0; i < WRONG_LETTERS_COLUMNS; i++)
       {
@@ -251,6 +269,8 @@ public class Hangman extends GraphicsProgram
         }
       }
       
+      //"guess" a space for words that have spaces since players don't have to guess spaces
+      guess(' ', false, true);
       add(answerLine, answerLineX, answerLineY);
       System.out.println(selectedWord);
       gameState = true;
@@ -263,139 +283,7 @@ public class Hangman extends GraphicsProgram
     }
     if (e.getSource() == submit && gameState == true && guess.getText().length() == 1)
     {
-      char theGuess = guess.getText().charAt(0);
-      if (Character.isLetter(theGuess) == true) //Make sure the guess is a letter
-      {
-        System.out.println("good");
-        //Check to make sure 1) the guess is correct and 2) it hasn't been guessed already
-        boolean isNotAlreadyCorrect = true;
-        boolean isCorrectGuess = false;
-        int[] positions = new int[wordArray.length];
-        int n = 0;
-        for (int i = 0; i < wordArray.length; i++)
-        {
-          if (theGuess == wordArray[i])
-          {
-            isCorrectGuess = true;
-            positions[n] = i;
-            n++;
-          }
-          if (theGuess == correctGuesses[i])
-          {
-            isNotAlreadyCorrect = false;
-          }
-        }
-        if (isCorrectGuess == true && isNotAlreadyCorrect == true) //it is correct and hasn't been guessed
-        {
-          System.out.println("correct");
-          for (int i = 0; i < correctGuesses.length; i++)
-          {
-            //Add the guess to the next open spot in correctGuesses
-            System.out.println(correctGuesses[i]);
-            if (correctGuesses[i] == '\u0000')
-            {
-              correctGuesses[i] = theGuess;
-              System.out.println("done");
-              break;
-            }
-          }
-          for (int i = 0; i < positions.length; i++)
-          {
-            System.out.println("setting");
-            if (!(i == 0) && positions[i + 1] == 0 && positions[i] == 0)
-              //duplicate 0 means it's not actually a position
-            {
-              System.out.println("break");
-              break;
-            }
-            else
-            {
-              //Place the guess in every instance of that letter
-              answerLetters[positions[i]].setLabel("" + theGuess);
-              System.out.println("set");
-            }
-          }
-          rightGuesses++;
-          if (rightGuesses == wordArray.length)
-          {
-            stopGame(false, true);
-          }
-        }
-        else if (isCorrectGuess == false)
-        {
-          System.out.println("wrong");
-          boolean isAlreadyIncorrect = false;
-          //Check if it has been guessed before
-          for (int i = 0; i < incorrectGuesses.length; i++)
-          {
-            if (theGuess == incorrectGuesses[i])
-            {
-              isAlreadyIncorrect = true;
-            }
-          }
-          if (isAlreadyIncorrect == false)
-          {
-            //Populate the next available spot in incorrectGuesses
-            for (int i = 0; i < incorrectGuesses.length; i++)
-            {
-              System.out.println(incorrectGuesses[i]);
-              if (incorrectGuesses[i] == '\u0000')
-              {
-                incorrectGuesses[i] = theGuess;
-                System.out.println("done");
-                break;
-              }
-            }
-            //Increase the count of wrong guesses
-            wrongGuesses++;
-            //Draw the hangman & check if the game is over
-            switch (wrongGuesses)
-            {
-              case 1:
-                add(base);
-                wrongLetters[0][0].setLabel("" + theGuess);
-                break;
-              case 2:
-                add(column);
-                wrongLetters[1][0].setLabel("" + theGuess);
-                break;
-              case 3:
-                add(overhang);
-                wrongLetters[2][0].setLabel("" + theGuess);
-                break;
-              case 4:
-                add(noose);
-                wrongLetters[3][0].setLabel("" + theGuess);
-                break;
-              case 5:
-                add(head);
-                wrongLetters[4][0].setLabel("" + theGuess);
-                break;
-              case 6:
-                add(body);
-                wrongLetters[0][1].setLabel("" + theGuess);
-                break;
-              case 7:
-                add(lArm);
-                wrongLetters[1][1].setLabel("" + theGuess);
-                break;
-              case 8:
-                add(rArm);
-                wrongLetters[2][1].setLabel("" + theGuess);
-                break;
-              case 9:
-                add(lLeg);
-                wrongLetters[3][1].setLabel("" + theGuess);
-                break;
-              case 10:
-                add(rLeg);
-                wrongLetters[4][1].setLabel("" + theGuess);
-                stopGame(false, false);
-                break;
-            }
-          }
-        }        
-      }
+      guess(guess.getText().charAt(0), true, false);
     }
   }  
   
@@ -441,5 +329,144 @@ public class Hangman extends GraphicsProgram
   {
     statusLabel.setLabel(newLabel);
     statusLabel.setLocation(CENTER_X - (statusLabel.getWidth() / 2), 10);
+  }
+  
+  public void guess(char theGuess, boolean mattersIfLetter, boolean overrideGuessPenalty)
+  {
+    if (Character.isLetter(theGuess) == true || mattersIfLetter == false) //Make sure the guess is a letter
+    {
+      System.out.println("good");
+      //Check to make sure 1) the guess is correct and 2) it hasn't been guessed already
+      boolean isNotAlreadyCorrect = true;
+      boolean isCorrectGuess = false;
+      int[] positions = new int[wordArray.length];
+      int n = 0;
+      for (int i = 0; i < wordArray.length; i++)
+      {
+        if (theGuess == wordArray[i])
+        {
+          isCorrectGuess = true;
+          positions[n] = i;
+          n++;
+        }
+        if (theGuess == correctGuesses[i])
+        {
+          isNotAlreadyCorrect = false;
+        }
+      }
+      if (isCorrectGuess == true && isNotAlreadyCorrect == true) //it is correct and hasn't been guessed
+      {
+        System.out.println("correct");
+        for (int i = 0; i < correctGuesses.length; i++)
+        {
+          //Add the guess to the next open spot in correctGuesses
+          System.out.println(correctGuesses[i]);
+          if (correctGuesses[i] == '\u0000')
+          {
+            correctGuesses[i] = theGuess;
+            System.out.println("done");
+            break;
+          }
+        }
+        for (int i = 0; i < positions.length; i++)
+        {
+          System.out.println("setting");
+          if (!(i == 0) && positions[i + 1] == 0 && positions[i] == 0)
+            //duplicate 0 means it's not actually a position
+          {
+            System.out.println("break");
+            break;
+          }
+          else
+          {
+            //Place the guess in every instance of that letter
+            answerLetters[positions[i]].setLabel("" + theGuess);
+            System.out.println("set");
+          }
+        }
+        rightGuesses++;
+        if (rightGuesses == wordArray.length)
+        {
+          stopGame(false, true);
+        }
+      }
+      else if (isCorrectGuess == false)
+      {
+        System.out.println("wrong");
+        boolean isAlreadyIncorrect = false;
+        //Check if it has been guessed before
+        for (int i = 0; i < incorrectGuesses.length; i++)
+        {
+          if (theGuess == incorrectGuesses[i])
+          {
+            isAlreadyIncorrect = true;
+          }
+        }
+        if (isAlreadyIncorrect == false)
+        {
+          //Populate the next available spot in incorrectGuesses
+          for (int i = 0; i < incorrectGuesses.length; i++)
+          {
+            System.out.println(incorrectGuesses[i]);
+            if (incorrectGuesses[i] == '\u0000')
+            {
+              incorrectGuesses[i] = theGuess;
+              System.out.println("done");
+              break;
+            }
+          }
+          //Increase the count of wrong guesses if overrideGuessPenalty isn't true
+          if (overrideGuessPenalty == false)
+          {
+            wrongGuesses++;
+          }
+          //Draw the hangman & check if the game is over
+          switch (wrongGuesses)
+          {
+            case 1:
+              add(base);
+              wrongLetters[0][0].setLabel("" + theGuess);
+              break;
+            case 2:
+              add(column);
+              wrongLetters[1][0].setLabel("" + theGuess);
+              break;
+            case 3:
+              add(overhang);
+              wrongLetters[2][0].setLabel("" + theGuess);
+              break;
+            case 4:
+              add(noose);
+              wrongLetters[3][0].setLabel("" + theGuess);
+              break;
+            case 5:
+              add(head);
+              wrongLetters[4][0].setLabel("" + theGuess);
+              break;
+            case 6:
+              add(body);
+              wrongLetters[0][1].setLabel("" + theGuess);
+              break;
+            case 7:
+              add(lArm);
+              wrongLetters[1][1].setLabel("" + theGuess);
+              break;
+            case 8:
+              add(rArm);
+              wrongLetters[2][1].setLabel("" + theGuess);
+              break;
+            case 9:
+              add(lLeg);
+              wrongLetters[3][1].setLabel("" + theGuess);
+              break;
+            case 10:
+              add(rLeg);
+              wrongLetters[4][1].setLabel("" + theGuess);
+              stopGame(false, false);
+              break;
+          }
+        }
+      }
+    }
   }
 }
